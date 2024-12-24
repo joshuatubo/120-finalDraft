@@ -7,6 +7,7 @@ from .serializers import ReceivedMessageSerializer, SentMessageSerializer
 from django.shortcuts import get_object_or_404, render
 from .middleware import DecryptionMiddleware
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 import requests
 from django.utils import timezone
 
@@ -63,11 +64,16 @@ def message_detail(request, message_id):
         'message': message
     })
 
+@csrf_exempt
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def receive_message(request):
     try:
-        print(f"Received encrypted message data: {request.data}")
+        print("=== Received Message Request ===")
+        print(f"Request method: {request.method}")
+        print(f"Request headers: {request.headers}")
+        print(f"Request data: {request.data}")
+        
         data = request.data
         
         # Find or create receiver user

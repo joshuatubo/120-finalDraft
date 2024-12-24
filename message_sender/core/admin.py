@@ -43,19 +43,34 @@ class MessageAdmin(admin.ModelAdmin):
             
             print(f"Sending encrypted message to receiver: {payload}")
             
-            response = requests.post(
-                receiver_url,
-                json=payload,
-                headers={'Content-Type': 'application/json'}
-            )
-            
-            if response.status_code == 200:
-                print(f"Message sent successfully: {response.json()}")
-                obj.is_delivered = True
-                obj.save()
-            else:
-                print(f"Error sending message: {response.text}")
-                raise Exception(f"Failed to deliver message: {response.text}")
+            try:
+                response = requests.post(
+                    receiver_url,
+                    json=payload,
+                    headers={
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    timeout=10  # Add timeout
+                )
+                
+                print(f"Response status code: {response.status_code}")
+                print(f"Response headers: {response.headers}")
+                print(f"Response content: {response.text}")
+                
+                if response.status_code == 200:
+                    print(f"Message sent successfully: {response.json()}")
+                    obj.is_delivered = True
+                    obj.save()
+                else:
+                    error_msg = f"Failed to deliver message. Status code: {response.status_code}, Response: {response.text}"
+                    print(error_msg)
+                    raise Exception(error_msg)
+                    
+            except requests.RequestException as e:
+                error_msg = f"Network error while delivering message: {str(e)}"
+                print(error_msg)
+                raise Exception(error_msg)
                 
         except Exception as e:
             print(f"Error in save_model: {str(e)}")
